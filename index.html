@@ -31,24 +31,33 @@
             </div>
         </div>
 
-        <!-- PDF Success -->
+        <!-- Label PDF Success -->
         <div id="successMessage" class="hidden mt-8 bg-emerald-950 border border-emerald-800 rounded-3xl p-8 text-center">
             <div class="text-6xl mb-4">✅</div>
             <h3 class="text-2xl font-semibold text-white mb-2">Labels Generated!</h3>
             <p class="text-emerald-300 mb-6">Ready for your Niimbot B1.<br>Click below to download the PDF.</p>
-            <button onclick="downloadPDF()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-12 py-4 rounded-2xl text-lg font-semibold transition">⬇️ Download PDF</button>
+            <button onclick="downloadPDF()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-12 py-4 rounded-2xl text-lg font-semibold transition">⬇️ Download Labels PDF</button>
         </div>
 
-        <!-- Hand-Write Summary -->
+        <!-- Delivery Summary Section -->
         <div id="handWriteSummary" class="hidden mt-8 bg-zinc-900 border border-zinc-800 rounded-3xl shadow-xl p-8">
             <h2 class="text-2xl font-bold mb-6 text-white">Hand-Write Label Summary</h2>
             <div id="summaryContent" class="space-y-8"></div>
+            
+            <!-- Export PDF Button -->
+            <div id="summaryPDFButton" class="hidden mt-8 pt-6 border-t border-zinc-700">
+                <button onclick="downloadSummaryPDF()" 
+                        class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-5 rounded-2xl text-lg transition">
+                    ⬇️ Export PDF
+                </button>
+            </div>
         </div>
     </div>
 
     <script>
         const excludedCodes = new Set(["SCE01","SCE21","CHE08","PPP03","BAC04"]);
         let currentResults = [];
+        let currentSummaryGroups = {};
 
         function formatUKDate(dateStr) {
             const d = new Date(dateStr);
@@ -215,18 +224,20 @@
                 groups[key].total += 1;
             });
 
+            currentSummaryGroups = groups;
+
             let html = '';
             Object.keys(groups).sort().forEach(key => {
                 const group = groups[key];
                 html += '<div class="mb-8">';
                 html += '<h3 class="text-emerald-400 text-xl font-bold mb-1">' + key + '</h3>';
-                html += '<p class="text-zinc-400 mb-4">Total: <span class="font-semibold text-emerald-400">' + group.total + ' label' + (group.total === 1 ? '' : 's') + '</span></p>';
+                html += '<p class="text-zinc-400 mb-4">Total: <span class="font-semibold text-emerald-400">' + group.total + ' Label' + (group.total === 1 ? '' : 's') + '</span></p>';
 
                 Object.keys(group.items).sort().forEach(product => {
                     const count = group.items[product];
                     html += '<div class="flex justify-between bg-zinc-800 px-5 py-3.5 rounded-2xl mb-2">';
                     html += '<span>' + product + '</span>';
-                    html += '<span class="font-semibold text-emerald-400">' + count + ' label' + (count === 1 ? '' : 's') + '</span>';
+                    html += '<span class="font-semibold text-emerald-400">' + count + ' Label' + (count === 1 ? '' : 's') + '</span>';
                     html += '</div>';
                 });
                 html += '</div>';
@@ -234,6 +245,57 @@
 
             document.getElementById("summaryContent").innerHTML = html;
             document.getElementById("handWriteSummary").classList.remove("hidden");
+            document.getElementById("summaryPDFButton").classList.remove("hidden");
+        }
+
+        function downloadSummaryPDF() {
+            if (Object.keys(currentSummaryGroups).length === 0) return alert("Generate the summary first");
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+            let y = 20;
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(16);
+            doc.text("Delivery Summary", 105, y, { align: "center" });
+            y += 12;
+
+            Object.keys(currentSummaryGroups).sort().forEach(key => {
+                const group = currentSummaryGroups[key];
+
+                // Weekday + Date — now BOLD (exactly as requested)
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(15);
+                doc.setTextColor(16, 185, 129);
+                doc.text(key, 20, y);
+                y += 8;
+
+                // Total (kept exactly the size you like)
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(14);
+                doc.setTextColor(0);
+                doc.text("Total: " + group.total + " Labels", 20, y);
+                y += 8;
+
+                // Items (compact)
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(11);
+                Object.keys(group.items).sort().forEach(product => {
+                    const count = group.items[product];
+                    doc.text(product, 20, y);
+                    doc.text(count + " Labels", 140, y);
+                    y += 6;
+                });
+
+                y += 10;
+
+                if (y > 275) {
+                    doc.addPage();
+                    y = 20;
+                }
+            });
+
+            doc.save("Delivery_Summary.pdf");
         }
 
         function downloadPDF() {
