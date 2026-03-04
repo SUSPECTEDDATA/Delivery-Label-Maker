@@ -41,7 +41,7 @@
 
         <!-- Delivery Summary Section -->
         <div id="handWriteSummary" class="hidden mt-8 bg-zinc-900 border border-zinc-800 rounded-3xl shadow-xl p-8">
-            <h2 class="text-2xl font-bold mb-6 text-white">Hand-Write Label Summary</h2>
+            <h2 class="text-2xl font-bold mb-6 text-white">Delivery Summary</h2>
             <div id="summaryContent" class="space-y-8"></div>
             
             <!-- Export PDF Button -->
@@ -263,21 +263,21 @@
             Object.keys(currentSummaryGroups).sort().forEach(key => {
                 const group = currentSummaryGroups[key];
 
-                // Weekday + Date — now BOLD (exactly as requested)
+                // Weekday + Date — BOLD
                 doc.setFont("helvetica", "bold");
                 doc.setFontSize(15);
                 doc.setTextColor(16, 185, 129);
                 doc.text(key, 20, y);
                 y += 8;
 
-                // Total (kept exactly the size you like)
+                // Total
                 doc.setFont("helvetica", "bold");
                 doc.setFontSize(14);
                 doc.setTextColor(0);
                 doc.text("Total: " + group.total + " Labels", 20, y);
                 y += 8;
 
-                // Items (compact)
+                // Items
                 doc.setFont("helvetica", "normal");
                 doc.setFontSize(11);
                 Object.keys(group.items).sort().forEach(product => {
