@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delivery Label Maker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body { font-family: 'Inter', system-ui, sans-serif; }
+    </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100">
+    <div class="max-w-3xl mx-auto p-8">
+        <div class="mb-10">
+            <h1 class="text-4xl font-bold tracking-tight">Delivery Label Maker</h1>
+            <p class="text-emerald-400 font-medium text-lg">Campaign 2 • 50×50mm Labels</p>
+        </div>
+
+        <div class="bg-zinc-900 border border-zinc-800 rounded-3xl shadow-xl p-8">
+            <h2 class="text-xl font-semibold mb-6 text-white">1. Delivery Date</h2>
+            <input type="date" id="deliveryDate" 
+                   class="w-full px-6 py-5 bg-zinc-800 border border-zinc-700 rounded-2xl text-lg focus:outline-none focus:border-emerald-500 text-white">
+
+            <h2 class="text-xl font-semibold mt-10 mb-6 text-white">2. Paste Order</h2>
+            <textarea id="orderInput" rows="12" 
+                class="w-full px-6 py-5 bg-zinc-800 border border-zinc-700 rounded-3xl font-mono text-sm resize-y focus:outline-none focus:border-emerald-500 text-white"
+                placeholder="Paste your order here..."></textarea>
+
+            <div class="mt-10">
+                <button onclick="processOrder()" 
+                        class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-5 rounded-2xl text-lg transition">
+                    Generate Labels
+                </button>
+            </div>
+        </div>
+
+        <!-- Success message -->
+        <div id="successMessage" class="hidden mt-8 bg-emerald-950 border border-emerald-800 rounded-3xl p-8 text-center">
+            <div class="text-6xl mb-4">✅</div>
+            <h3 class="text-2xl font-semibold text-white mb-2">Labels Generated!</h3>
+            <p class="text-emerald-300 mb-6">Your 50×50mm labels are ready.<br>Click below to download the PDF for your Niimbot B1.</p>
+            <button onclick="downloadPDF()" 
+                    class="bg-emerald-600 hover:bg-emerald-500 text-white px-12 py-4 rounded-2xl text-lg font-semibold transition">
+                ⬇️ Download PDF
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const excludedCodes = new Set(["SCE01","SCE21","CHE08","PPP03","BAC04"]);
+
+        let currentResults = [];
+
+        function formatUKDate(dateStr) {
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' });
+        }
+
+        function getWeekday(dateStr) {
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('en-GB', { weekday: 'long' });
+        }
+
+        function calculateExpiry(deliveryStr, days) {
+            const [y, m, d] = deliveryStr.split('-').map(Number);
+            const date = new Date(y, m-1, d);
+            date.setDate(date.getDate() + days - 1);
+            return { date: formatUKDate(date), weekday: getWeekday(date) };
+        }
+
+        function parseOrder(text) {
+            const lines = text.trim().split('\n').filter(l => l.trim().length > 5);
+            const items = [];
+            for (let line of lines) {
+                let parts = line.split('\t');
+                if (parts.length < 4) parts = line.split(',');
+                if (parts.length < 4) parts = line.trim().split(/\s{2,}/);
+                if (parts.length < 4) continue;
+                
+                const code = parts[1].trim().toUpperCase();
+                const qtyStr = parts[3].trim().replace(/[^0-9]/g, '') || "1";
+                const qty = parseInt(qtyStr) || 1;
+                let product = parts[2] ? parts[2].trim() : "";
+                
+                items.push({ code, product, qty });
+            }
+            return items;
+        }
+
+        function getDaysAndName(code, product) {
+            code = code.toUpperCase().trim();
+            if (excludedCodes.has(code)) return null;
+
+            let name = product.split("1x")[0].trim().replace(/ \d+$/, "");
+
+            if (code === "FT02" || product.toUpperCase().includes("FLOUR TORTILLA")) name = "WRAPZ";
+            if (code === "NC01" || product.toUpperCase().includes("NDUJA")) name = "NDUJA";
+            if (code === "CHI23" || product.toUpperCase().includes("BONELESS BITES")) name = "BONLESS BITES";
+            if (code === "PW10" || product.toUpperCase().includes("WEDGE")) name = "WEDGES";
+            if (code === "CD09" || product.toUpperCase().includes("COOKIE DOUGH")) name = "COOKIES";
+            if (code === "CHI08" || product.toUpperCase().includes("TANDOORI")) name = "TANDOORI";
+
+            if (product.toUpperCase().includes("CREME EGG") || product.toUpperCase().includes("CREME EGG COOKIES")) name = "CREME EGG COOKIES";
+
+            if (code === "STR07") name = "STRIPPERS";
+            if (code === "KK04") name = "KICKERS";
+            if (code === "WIN06") name = "WINGS";
+            if (code === "CHI24") name = "TENDERS";
+            if (code === "MB05") name = "MEATBALLS";
+            if (code === "BEE01") name = "BEEF";
+            if (code === "CHI06") name = "CHICKEN STRIPS";
+            if (code === "SAU16") name = "SAUSAGE";
+            if (code === "PAS06") name = "MAC N CHEESE";
+            if (code === "CHE24") name = "STRING CHEESE";
+
+            if (code === "TCF16" || code === "TCF17" || product.toUpperCase().includes("THIN CRUST")) {
+                let size = "";
+                if (product.includes("11.5")) size = "11.5\"";
+                else if (product.includes("13.5")) size = "13.5\"";
+                else if (product.includes("7\"") || product.includes("7 ")) size = "7\"";
+                else if (product.includes("9.5")) size = "9.5\"";
+                name = size ? `THIN CRUST ${size}` : "THIN CRUST";
+            }
+
+            let days = 0;
+            if (code === "STR07" || product.toUpperCase().includes("STRIPPERS")) days = 10;
+            else if (code === "WIN06" || product.toUpperCase().includes("WINGS")) days = 9;
+            else if (code === "CHI24" || product.toUpperCase().includes("TENDERS")) days = 9;
+            else if (code === "BEE01") days = 9;
+            else if (code === "CHI06" || product.toUpperCase().includes("CHICKEN STRIPS")) days = 9;
+            else if (code === "SAU16") days = 6;
+            else if (code === "MB05") days = 9;
+            else if (code === "PAS06") days = 6;
+            else if (code === "CHE24") days = 7;
+            else if (code === "TCF16" || code === "TCF17" || product.toUpperCase().includes("THIN CRUST")) days = 21;
+            else if (code === "KK04") days = 10;
+            else if (code === "PW10" || product.toUpperCase().includes("WEDGE")) days = 7;
+            else if (code === "FT02" || product.toUpperCase().includes("FLOUR TORTILLA")) days = 22;
+            else if (code === "NC01" || product.toUpperCase().includes("NDUJA")) days = 12;
+            else if (code === "CHI23" || product.toUpperCase().includes("BONELESS BITES")) days = 9;
+            else if (code === "CD09" || product.toUpperCase().includes("COOKIE DOUGH")) days = 17;
+            else if (product.toUpperCase().includes("CREME EGG")) days = 14;
+
+            if (days === 0) return null;
+            return { days, name };
+        }
+
+        function processOrder() {
+            const dateInput = document.getElementById("deliveryDate").value;
+            const text = document.getElementById("orderInput").value.trim();
+            if (!dateInput) return alert("Select delivery date");
+            if (!text) return alert("Paste your order");
+
+            const parsed = parseOrder(text);
+            currentResults = [];
+
+            parsed.forEach(item => {
+                const info = getDaysAndName(item.code, item.product);
+                if (!info) return;
+
+                const expiry = calculateExpiry(dateInput, info.days);
+                if (!expiry) return;
+
+                let printQty = item.qty;
+                const upper = item.product.toUpperCase();
+                const code = item.code;
+
+                if (code === "STR07" || upper.includes("STRIPPERS")) printQty = item.qty * 4;
+                else if (code === "WIN06" || upper.includes("WINGS")) printQty = item.qty * 4;
+                else if (upper.includes("WEDGES") || code === "PW10") printQty = item.qty * 4;
+                else if (upper.includes("FRIES")) printQty = item.qty * 6;
+                else if (code === "FT02" || upper.includes("FLOUR TORTILLA")) printQty = item.qty * 2;
+
+                for (let i = 0; i < printQty; i++) {
+                    currentResults.push({
+                        product: info.name,
+                        date: expiry.date,
+                        weekday: expiry.weekday
+                    });
+                }
+            });
+
+            if (currentResults.length === 0) return alert("No items with expiry dates found");
+
+            document.getElementById("successMessage").classList.remove("hidden");
+        }
+
+        function downloadPDF() {
+            if (!currentResults.length) return;
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: [50, 50] });
+
+            currentResults.forEach((label, i) => {
+                if (i > 0) doc.addPage([50, 50], "portrait");
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(11);
+                doc.text(label.product, 25, 18, { align: "center", maxWidth: 42 });
+                doc.setFontSize(14);
+                doc.setTextColor(230, 0, 18);
+                doc.text(label.weekday, 25, 29, { align: "center" });
+                doc.setFontSize(22);
+                doc.setTextColor(0);
+                doc.text(label.date, 25, 40, { align: "center" });
+            });
+
+            doc.save(`Domino's_Labels.pdf`);
+        }
+
+        window.onload = () => {
+            document.getElementById("deliveryDate").value = "2026-03-04";
+        };
+    </script>
+</body>
+</html>
