@@ -218,18 +218,18 @@
             let html = '';
             Object.keys(groups).sort().forEach(key => {
                 const group = groups[key];
-                html += `<div class="mb-8">`;
-                html += `<h3 class="text-emerald-400 text-xl font-bold mb-1">${key}</h3>`;
-                html += `<p class="text-zinc-400 mb-4">Total: <span class="font-semibold text-emerald-400">\( {group.total} label \){group.total === 1 ? '' : 's'}</span></p>`;
+                html += '<div class="mb-8">';
+                html += '<h3 class="text-emerald-400 text-xl font-bold mb-1">' + key + '</h3>';
+                html += '<p class="text-zinc-400 mb-4">Total: <span class="font-semibold text-emerald-400">' + group.total + ' label' + (group.total === 1 ? '' : 's') + '</span></p>';
 
                 Object.keys(group.items).sort().forEach(product => {
                     const count = group.items[product];
-                    html += `<div class="flex justify-between bg-zinc-800 px-5 py-3.5 rounded-2xl mb-2">
-                        <span>${product}</span>
-                        <span class="font-semibold text-emerald-400">\( {count} label \){count === 1 ? '' : 's'}</span>
-                    </div>`;
+                    html += '<div class="flex justify-between bg-zinc-800 px-5 py-3.5 rounded-2xl mb-2">';
+                    html += '<span>' + product + '</span>';
+                    html += '<span class="font-semibold text-emerald-400">' + count + ' label' + (count === 1 ? '' : 's') + '</span>';
+                    html += '</div>';
                 });
-                html += `</div>`;
+                html += '</div>';
             });
 
             document.getElementById("summaryContent").innerHTML = html;
