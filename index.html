@@ -31,7 +31,6 @@
             </div>
         </div>
 
-        <!-- Label PDF Success -->
         <div id="successMessage" class="hidden mt-8 bg-emerald-950 border border-emerald-800 rounded-3xl p-8 text-center">
             <div class="text-6xl mb-4">✅</div>
             <h3 class="text-2xl font-semibold text-white mb-2">Labels Generated!</h3>
@@ -39,15 +38,12 @@
             <button onclick="downloadPDF()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-12 py-4 rounded-2xl text-lg font-semibold transition">⬇️ Download Labels PDF</button>
         </div>
 
-        <!-- Delivery Summary Section -->
         <div id="handWriteSummary" class="hidden mt-8 bg-zinc-900 border border-zinc-800 rounded-3xl shadow-xl p-8">
             <h2 class="text-2xl font-bold mb-6 text-white">Delivery Summary</h2>
             <div id="summaryContent" class="space-y-8"></div>
             
-            <!-- Export PDF Button -->
             <div id="summaryPDFButton" class="hidden mt-8 pt-6 border-t border-zinc-700">
-                <button onclick="downloadSummaryPDF()" 
-                        class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-5 rounded-2xl text-lg transition">
+                <button onclick="downloadSummaryPDF()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-5 rounded-2xl text-lg transition">
                     ⬇️ Export PDF
                 </button>
             </div>
@@ -99,10 +95,15 @@
 
             let name = product.split("1x")[0].trim().replace(/ \d+$/, "");
 
-            // ── CRÈME EGG COOKIES (CD23) — now fully fixed for your new order ──
             if (code === "CD23" || product.toUpperCase().includes("CREME EGG") || product.toUpperCase().includes("CRÈME EGG")) {
                 name = "CREME EGG COOKIES";
                 return { days: 14, name };
+            }
+
+            // ── NEW: Fries (PFR02) ──
+            if (code === "PFR02" || product.toUpperCase().includes("FRIES")) {
+                name = "FRIES";
+                return { days: 7, name };
             }
 
             if (code === "FT02" || product.toUpperCase().includes("FLOUR TORTILLA")) name = "WRAPZ";
@@ -176,7 +177,7 @@
                 if (code === "STR07" || upper.includes("STRIPPERS")) printQty = item.qty * 4;
                 else if (code === "WIN06" || upper.includes("WINGS")) printQty = item.qty * 4;
                 else if (upper.includes("WEDGES") || code === "PW10") printQty = item.qty * 4;
-                else if (upper.includes("FRIES")) printQty = item.qty * 6;
+                else if (code === "PFR02" || upper.includes("FRIES")) printQty = item.qty * 6;   // ← Fries ×6
                 else if (code === "FT02" || upper.includes("FLOUR TORTILLA")) printQty = item.qty * 2;
 
                 for (let i = 0; i < printQty; i++) {
@@ -209,7 +210,7 @@
                 if (code === "STR07" || upper.includes("STRIPPERS")) printQty = item.qty * 4;
                 else if (code === "WIN06" || upper.includes("WINGS")) printQty = item.qty * 4;
                 else if (upper.includes("WEDGES") || code === "PW10") printQty = item.qty * 4;
-                else if (upper.includes("FRIES")) printQty = item.qty * 6;
+                else if (code === "PFR02" || upper.includes("FRIES")) printQty = item.qty * 6;   // ← Fries ×6
                 else if (code === "FT02" || upper.includes("FLOUR TORTILLA")) printQty = item.qty * 2;
 
                 for (let i = 0; i < printQty; i++) {
