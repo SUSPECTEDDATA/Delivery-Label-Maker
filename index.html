@@ -99,14 +99,18 @@
 
             let name = product.split("1x")[0].trim().replace(/ \d+$/, "");
 
+            // ── CRÈME EGG COOKIES (CD23) — now fully fixed for your new order ──
+            if (code === "CD23" || product.toUpperCase().includes("CREME EGG") || product.toUpperCase().includes("CRÈME EGG")) {
+                name = "CREME EGG COOKIES";
+                return { days: 14, name };
+            }
+
             if (code === "FT02" || product.toUpperCase().includes("FLOUR TORTILLA")) name = "WRAPZ";
             if (code === "NC01" || product.toUpperCase().includes("NDUJA")) name = "NDUJA";
             if (code === "CHI23" || product.toUpperCase().includes("BONELESS BITES")) name = "BONLESS BITES";
             if (code === "PW10" || product.toUpperCase().includes("WEDGE")) name = "WEDGES";
             if (code === "CD09" || product.toUpperCase().includes("COOKIE DOUGH")) name = "COOKIES";
             if (code === "CHI08" || product.toUpperCase().includes("TANDOORI")) name = "TANDOORI";
-
-            if (product.toUpperCase().includes("CREME EGG")) name = "CREME EGG COOKIES";
 
             if (code === "STR07") name = "STRIPPERS";
             if (code === "KK04") name = "KICKERS";
@@ -145,7 +149,6 @@
             else if (code === "NC01" || product.toUpperCase().includes("NDUJA")) days = 12;
             else if (code === "CHI23" || product.toUpperCase().includes("BONELESS BITES")) days = 9;
             else if (code === "CD09" || product.toUpperCase().includes("COOKIE DOUGH")) days = 17;
-            else if (product.toUpperCase().includes("CREME EGG")) days = 14;
 
             if (days === 0) return null;
             return { days, name };
@@ -316,7 +319,6 @@
             doc.save(`Domino's_Labels.pdf`);
         }
 
-        // Set default date to TODAY (current date)
         window.onload = () => {
             const today = new Date().toISOString().split('T')[0];
             document.getElementById("deliveryDate").value = today;
