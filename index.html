@@ -263,21 +263,18 @@
             Object.keys(currentSummaryGroups).sort().forEach(key => {
                 const group = currentSummaryGroups[key];
 
-                // Weekday + Date — BOLD
                 doc.setFont("helvetica", "bold");
                 doc.setFontSize(15);
                 doc.setTextColor(16, 185, 129);
                 doc.text(key, 20, y);
                 y += 8;
 
-                // Total
                 doc.setFont("helvetica", "bold");
                 doc.setFontSize(14);
                 doc.setTextColor(0);
                 doc.text("Total: " + group.total + " Labels", 20, y);
                 y += 8;
 
-                // Items
                 doc.setFont("helvetica", "normal");
                 doc.setFontSize(11);
                 Object.keys(group.items).sort().forEach(product => {
@@ -319,8 +316,10 @@
             doc.save(`Domino's_Labels.pdf`);
         }
 
+        // Set default date to TODAY (current date)
         window.onload = () => {
-            document.getElementById("deliveryDate").value = "2026-03-04";
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById("deliveryDate").value = today;
         };
     </script>
 </body>
