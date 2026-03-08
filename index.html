@@ -16,12 +16,8 @@
         <div class="mb-10 flex items-center justify-between">
             <div>
                 <h1 class="text-4xl font-bold tracking-tight">Delivery Label Maker</h1>
-                <p class="text-emerald-400 font-medium text-lg">Campaign 2 • 50×50mm Labels</p>
             </div>
-            <button onclick="toggleSettings()" 
-                    class="bg-zinc-800 hover:bg-zinc-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2 text-lg">
-                ⚙️ Settings
-            </button>
+            <button onclick="toggleSettings()" class="bg-zinc-800 hover:bg-zinc-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2 text-lg">⚙️ Settings</button>
         </div>
 
         <div class="bg-zinc-900 border border-zinc-800 rounded-3xl shadow-xl p-8">
@@ -47,7 +43,6 @@
         <div id="handWriteSummary" class="hidden mt-8 bg-zinc-900 border border-zinc-800 rounded-3xl shadow-xl p-8">
             <h2 class="text-2xl font-bold mb-6 text-white">Delivery Summary</h2>
             <div id="summaryContent" class="space-y-8"></div>
-            
             <div id="summaryPDFButton" class="hidden mt-8 pt-6 border-t border-zinc-700">
                 <button onclick="downloadSummaryPDF()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-5 rounded-2xl text-lg transition">⬇️ Export PDF</button>
             </div>
@@ -61,7 +56,6 @@
                 <h2 class="text-2xl font-bold">Item Settings</h2>
                 <button onclick="closeSettings()" class="text-3xl text-zinc-400 hover:text-white">×</button>
             </div>
-            
             <div class="p-6 max-h-[60vh] overflow-auto">
                 <table class="w-full text-sm">
                     <thead>
@@ -69,23 +63,23 @@
                             <th class="text-left py-3">Code</th>
                             <th class="text-left py-3">Product Name</th>
                             <th class="text-left py-3">Shelf Life (days)</th>
+                            <th class="text-left py-3">Labels Per Item</th>
                             <th class="w-24"></th>
                         </tr>
                     </thead>
                     <tbody id="modalItemsList"></tbody>
                 </table>
             </div>
-
             <div class="p-6 border-t border-zinc-700 bg-zinc-950">
                 <h3 class="font-semibold mb-4" id="modalFormTitle">Add New Item</h3>
-                <div class="grid grid-cols-3 gap-4">
+                <div class="grid grid-cols-4 gap-4">
                     <input id="modalNewCode" placeholder="Code" class="bg-zinc-800 border border-zinc-700 rounded-2xl px-4 py-3">
                     <input id="modalNewName" placeholder="Name" class="bg-zinc-800 border border-zinc-700 rounded-2xl px-4 py-3">
                     <input id="modalNewDays" type="number" placeholder="Days" class="bg-zinc-800 border border-zinc-700 rounded-2xl px-4 py-3">
+                    <input id="modalNewLabelsPerItem" type="number" value="1" placeholder="Labels" class="bg-zinc-800 border border-zinc-700 rounded-2xl px-4 py-3">
                 </div>
                 <div class="flex gap-4 mt-6">
-                    <button onclick="modalAddOrUpdateItem()" id="modalAddUpdateBtn"
-                            class="flex-1 bg-emerald-600 hover:bg-emerald-500 py-4 rounded-2xl font-semibold">Add Item</button>
+                    <button onclick="modalAddOrUpdateItem()" id="modalAddUpdateBtn" class="flex-1 bg-emerald-600 hover:bg-emerald-500 py-4 rounded-2xl font-semibold">Add Item</button>
                     <button onclick="closeSettings()" class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-4 rounded-2xl">Close</button>
                 </div>
             </div>
@@ -98,35 +92,43 @@
         let currentSummaryGroups = {};
 
         let shelfLifeItems = [
-            {code:"STR07", name:"STRIPPERS", days:10},
-            {code:"WIN06", name:"WINGS", days:9},
-            {code:"CHI24", name:"TENDERS", days:9},
-            {code:"BEE01", name:"BEEF", days:9},
-            {code:"CHI06", name:"CHICKEN STRIPS", days:9},
-            {code:"SAU16", name:"SAUSAGE", days:6},
-            {code:"MB05", name:"MEATBALLS", days:9},
-            {code:"PAS06", name:"MAC N CHEESE", days:6},
-            {code:"CHE24", name:"STRING CHEESE", days:7},
-            {code:"KK04", name:"KICKERS", days:10},
-            {code:"PW10", name:"WEDGES", days:7},
-            {code:"FT02", name:"WRAPZ", days:22},
-            {code:"NC01", name:"NDUJA", days:12},
-            {code:"CHI23", name:"BONLESS BITES", days:9},
-            {code:"CD09", name:"COOKIES", days:17},
-            {code:"CD23", name:"CREME EGG COOKIES", days:14},
-            {code:"PFR02", name:"FRIES", days:7},
-            {code:"CHI08", name:"TANDOORI", days:10}
+            {code:"STR07", name:"STRIPPERS", days:10, labelsPerItem:4},
+            {code:"WIN06", name:"WINGS", days:9, labelsPerItem:4},
+            {code:"CHI24", name:"TENDERS", days:9, labelsPerItem:1},
+            {code:"BEE01", name:"BEEF", days:9, labelsPerItem:1},
+            {code:"CHI06", name:"CHICKEN STRIPS", days:9, labelsPerItem:1},
+            {code:"SAU16", name:"SAUSAGE", days:6, labelsPerItem:1},
+            {code:"MB05", name:"MEATBALLS", days:9, labelsPerItem:1},
+            {code:"PAS06", name:"MAC N CHEESE", days:6, labelsPerItem:1},
+            {code:"CHE24", name:"STRING CHEESE", days:7, labelsPerItem:1},
+            {code:"KK04", name:"KICKERS", days:10, labelsPerItem:1},
+            {code:"PW10", name:"WEDGES", days:7, labelsPerItem:4},
+            {code:"FT02", name:"WRAPZ", days:22, labelsPerItem:2},
+            {code:"NC01", name:"NDUJA", days:12, labelsPerItem:1},
+            {code:"CHI23", name:"BONLESS BITES", days:9, labelsPerItem:1},
+            {code:"CD09", name:"COOKIES", days:17, labelsPerItem:1},
+            {code:"CD23", name:"CREME EGG COOKIES", days:14, labelsPerItem:1},
+            {code:"PFR02", name:"FRIES", days:7, labelsPerItem:6},
+            {code:"CHI08", name:"TANDOORI", days:10, labelsPerItem:1},
+            {code:"TCF07", name:"THIN CRUST 7\"", days:21, labelsPerItem:1},
+            {code:"TCF16", name:"THIN CRUST 11.5\"", days:21, labelsPerItem:1},
+            {code:"TCF17", name:"THIN CRUST 13.5\"", days:21, labelsPerItem:1}
         ];
 
         let editingIndex = -1;
 
         if (localStorage.getItem("shelfLifeItems")) {
-            shelfLifeItems = JSON.parse(localStorage.getItem("shelfLifeItems"));
+            let saved = JSON.parse(localStorage.getItem("shelfLifeItems"));
+            const codes = ["TCF07","TCF16","TCF17"];
+            codes.forEach(c => {
+                if (!saved.some(i => i.code === c)) {
+                    saved.push({code:c, name:`THIN CRUST ${c==="TCF07"?"7\"":c==="TCF16"?"11.5\"":"13.5\""}`, days:21, labelsPerItem:1});
+                }
+            });
+            shelfLifeItems = saved;
         }
 
-        function saveItems() {
-            localStorage.setItem("shelfLifeItems", JSON.stringify(shelfLifeItems));
-        }
+        function saveItems() { localStorage.setItem("shelfLifeItems", JSON.stringify(shelfLifeItems)); }
 
         function renderModalItemsList() {
             let html = "";
@@ -136,6 +138,7 @@
                     <td class="py-4 px-4">${item.code}</td>
                     <td class="py-4 px-4">${item.name}</td>
                     <td class="py-4 px-4">${item.days}</td>
+                    <td class="py-4 px-4">${item.labelsPerItem}</td>
                     <td class="py-4 px-4 text-right">
                         <button onclick="editItem(${i})" class="text-emerald-400 hover:text-white mr-4">Edit</button>
                         <button onclick="deleteItem(${i})" class="text-red-400 hover:text-white">Delete</button>
@@ -154,9 +157,7 @@
             }
         }
 
-        function closeSettings() {
-            document.getElementById("settingsModal").classList.add("hidden");
-        }
+        function closeSettings() { document.getElementById("settingsModal").classList.add("hidden"); }
 
         function resetModalForm() {
             editingIndex = -1;
@@ -165,6 +166,7 @@
             document.getElementById("modalNewCode").value = "";
             document.getElementById("modalNewName").value = "";
             document.getElementById("modalNewDays").value = "";
+            document.getElementById("modalNewLabelsPerItem").value = "1";
         }
 
         function editItem(index) {
@@ -175,6 +177,7 @@
             document.getElementById("modalNewCode").value = item.code;
             document.getElementById("modalNewName").value = item.name;
             document.getElementById("modalNewDays").value = item.days;
+            document.getElementById("modalNewLabelsPerItem").value = item.labelsPerItem;
         }
 
         function deleteItem(index) {
@@ -189,6 +192,7 @@
             let code = document.getElementById("modalNewCode").value.trim().toUpperCase();
             let name = document.getElementById("modalNewName").value.trim();
             let days = parseInt(document.getElementById("modalNewDays").value);
+            let labelsPerItem = parseInt(document.getElementById("modalNewLabelsPerItem").value) || 1;
 
             if (!code || !name || isNaN(days)) {
                 alert("Please fill all fields");
@@ -196,15 +200,43 @@
             }
 
             if (editingIndex >= 0) {
-                shelfLifeItems[editingIndex] = {code, name, days};
+                shelfLifeItems[editingIndex] = {code, name, days, labelsPerItem};
             } else {
-                shelfLifeItems.push({code, name, days});
+                shelfLifeItems.push({code, name, days, labelsPerItem});
             }
 
             saveItems();
             renderModalItemsList();
             resetModalForm();
             alert(editingIndex >= 0 ? "Item updated!" : "Item added!");
+        }
+
+        function getDaysAndName(code, product) {
+            code = code.toUpperCase().trim();
+            if (excludedCodes.has(code)) return null;
+
+            let item = shelfLifeItems.find(i => i.code === code);
+            if (item) {
+                let name = item.name;
+                if ((code === "TCF16" || code === "TCF17" || code === "TCF07") || product.toUpperCase().includes("THIN CRUST")) {
+                    let size = "";
+                    if (product.includes("11.5")) size = "11.5\"";
+                    else if (product.includes("13.5")) size = "13.5\"";
+                    else if (product.includes("7\"") || product.includes("7 ")) size = "7\"";
+                    name = size ? `THIN CRUST ${size}` : name;
+                }
+                return { days: item.days, name: name, labelsPerItem: item.labelsPerItem || 1 };
+            }
+
+            item = shelfLifeItems.find(i => product.toUpperCase().includes(i.name.toUpperCase()));
+            if (item) {
+                return { days: item.days, name: item.name, labelsPerItem: item.labelsPerItem || 1 };
+            }
+
+            if (code === "CD23" || product.toUpperCase().includes("CREME EGG")) return { days: 14, name: "CREME EGG COOKIES", labelsPerItem: 1 };
+            if (code === "PFR02" || product.toUpperCase().includes("FRIES")) return { days: 7, name: "FRIES", labelsPerItem: 6 };
+
+            return null;
         }
 
         function formatUKDate(dateStr) {
@@ -241,74 +273,6 @@
             return items;
         }
 
-        function getDaysAndName(code, product) {
-            code = code.toUpperCase().trim();
-            if (excludedCodes.has(code)) return null;
-
-            let name = product.split("1x")[0].trim().replace(/ \d+$/, "");
-
-            if (code === "CD23" || product.toUpperCase().includes("CREME EGG") || product.toUpperCase().includes("CRÈME EGG")) {
-                name = "CREME EGG COOKIES";
-                return { days: 14, name };
-            }
-
-            if (code === "PFR02" || product.toUpperCase().includes("FRIES")) {
-                name = "FRIES";
-                return { days: 7, name };
-            }
-
-            if (code === "FT02" || product.toUpperCase().includes("FLOUR TORTILLA")) name = "WRAPZ";
-            if (code === "NC01" || product.toUpperCase().includes("NDUJA")) name = "NDUJA";
-            if (code === "CHI23" || product.toUpperCase().includes("BONELESS BITES")) name = "BONLESS BITES";
-            if (code === "PW10" || product.toUpperCase().includes("WEDGE")) name = "WEDGES";
-            if (code === "CD09" || product.toUpperCase().includes("COOKIE DOUGH")) name = "COOKIES";
-            if (code === "CHI08" || product.toUpperCase().includes("TANDOORI")) name = "TANDOORI";
-
-            if (code === "STR07") name = "STRIPPERS";
-            if (code === "KK04") name = "KICKERS";
-            if (code === "WIN06") name = "WINGS";
-            if (code === "CHI24") name = "TENDERS";
-            if (code === "MB05") name = "MEATBALLS";
-            if (code === "BEE01") name = "BEEF";
-            if (code === "CHI06") name = "CHICKEN STRIPS";
-            if (code === "SAU16") name = "SAUSAGE";
-            if (code === "PAS06") name = "MAC N CHEESE";
-            if (code === "CHE24") name = "STRING CHEESE";
-
-            if (code === "TCF16" || code === "TCF17" || product.toUpperCase().includes("THIN CRUST")) {
-                let size = "";
-                if (product.includes("11.5")) size = "11.5\"";
-                else if (product.includes("13.5")) size = "13.5\"";
-                else if (product.includes("7\"") || product.includes("7 ")) size = "7\"";
-                else if (product.includes("9.5")) size = "9.5\"";
-                name = size ? `THIN CRUST ${size}` : "THIN CRUST";
-            }
-
-            let days = 0;
-            if (code === "STR07" || product.toUpperCase().includes("STRIPPERS")) days = 10;
-            else if (code === "WIN06" || product.toUpperCase().includes("WINGS")) days = 9;
-            else if (code === "CHI24" || product.toUpperCase().includes("TENDERS")) days = 9;
-            else if (code === "BEE01") days = 9;
-            else if (code === "CHI06" || product.toUpperCase().includes("CHICKEN STRIPS")) days = 9;
-            else if (code === "SAU16") days = 6;
-            else if (code === "MB05") days = 9;
-            else if (code === "PAS06") days = 6;
-            else if (code === "CHE24") days = 7;
-            else if (code === "TCF16" || code === "TCF17" || product.toUpperCase().includes("THIN CRUST")) days = 21;
-            else if (code === "KK04") days = 10;
-            else if (code === "PW10" || product.toUpperCase().includes("WEDGE")) days = 7;
-            else if (code === "FT02" || product.toUpperCase().includes("FLOUR TORTILLA")) days = 22;
-            else if (code === "NC01" || product.toUpperCase().includes("NDUJA")) days = 12;
-            else if (code === "CHI23" || product.toUpperCase().includes("BONELESS BITES")) days = 9;
-            else if (code === "CD09" || product.toUpperCase().includes("COOKIE DOUGH")) days = 17;
-            else if (code === "CD23" || product.toUpperCase().includes("CREME EGG")) days = 14;
-            else if (code === "PFR02" || product.toUpperCase().includes("FRIES")) days = 7;
-            else if (code === "CHI08" || product.toUpperCase().includes("TANDOORI")) days = 10;
-
-            if (days === 0) return null;
-            return { days, name };
-        }
-
         function processOrder() {
             const dateInput = document.getElementById("deliveryDate").value;
             const text = document.getElementById("orderInput").value.trim();
@@ -322,18 +286,7 @@
                 const info = getDaysAndName(item.code, item.product);
                 if (!info) return;
                 const expiry = calculateExpiry(dateInput, info.days);
-                if (!expiry) return;
-
-                let printQty = item.qty;
-                const upper = item.product.toUpperCase();
-                const code = item.code;
-
-                if (code === "STR07" || upper.includes("STRIPPERS")) printQty = item.qty * 4;
-                else if (code === "WIN06" || upper.includes("WINGS")) printQty = item.qty * 4;
-                else if (upper.includes("WEDGES") || code === "PW10") printQty = item.qty * 4;
-                else if (code === "PFR02" || upper.includes("FRIES")) printQty = item.qty * 6;
-                else if (code === "FT02" || upper.includes("FLOUR TORTILLA")) printQty = item.qty * 2;
-
+                let printQty = item.qty * (info.labelsPerItem || 1);
                 for (let i = 0; i < printQty; i++) {
                     currentResults.push({ product: info.name, date: expiry.date, weekday: expiry.weekday });
                 }
@@ -347,22 +300,18 @@
             if (!currentResults.length) return;
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: [50, 50] });
-
             currentResults.forEach((label, i) => {
-                if (i > 0) doc.addPage([50, 50], "portrait");
+                if (i > 0) doc.addPage([50, 50]);
                 doc.setFont("helvetica", "bold");
                 doc.setFontSize(13.5);
                 doc.text(label.product, 25, 16, { align: "center", maxWidth: 44 });
-
                 doc.setFontSize(16.5);
                 doc.setTextColor(230, 0, 18);
                 doc.text(label.weekday, 25, 28, { align: "center" });
-
                 doc.setFontSize(27);
                 doc.setTextColor(0);
                 doc.text(label.date, 25, 42, { align: "center" });
             });
-
             doc.save(`Domino's_Labels.pdf`);
         }
 
@@ -378,18 +327,7 @@
                 const info = getDaysAndName(item.code, item.product);
                 if (!info) return;
                 const expiry = calculateExpiry(dateInput, info.days);
-                if (!expiry) return;
-
-                let printQty = item.qty;
-                const upper = item.product.toUpperCase();
-                const code = item.code;
-
-                if (code === "STR07" || upper.includes("STRIPPERS")) printQty = item.qty * 4;
-                else if (code === "WIN06" || upper.includes("WINGS")) printQty = item.qty * 4;
-                else if (upper.includes("WEDGES") || code === "PW10") printQty = item.qty * 4;
-                else if (code === "PFR02" || upper.includes("FRIES")) printQty = item.qty * 6;
-                else if (code === "FT02" || upper.includes("FLOUR TORTILLA")) printQty = item.qty * 2;
-
+                let printQty = item.qty * (info.labelsPerItem || 1);
                 for (let i = 0; i < printQty; i++) {
                     tempResults.push({ product: info.name, date: expiry.date, weekday: expiry.weekday });
                 }
@@ -399,4 +337,53 @@
 
             const groups = {};
             tempResults.forEach(item => {
-                const key = `${item.weekday} ${item.da
+                const key = `${item.weekday} ${item.date}`;
+                if (!groups[key]) groups[key] = { items: {}, total: 0 };
+                groups[key].items[item.product] = (groups[key].items[item.product] || 0) + 1;
+                groups[key].total += 1;
+            });
+
+            currentSummaryGroups = groups;
+
+            let html = '';
+            Object.keys(groups).sort().forEach(key => {
+                const group = groups[key];
+                html += '<div class="mb-8">';
+                html += '<h3 class="text-emerald-400 text-xl font-bold mb-1">' + key + '</h3>';
+                html += '<p class="text-zinc-400 mb-4">Total: <span class="font-semibold text-emerald-400">' + group.total + ' Label' + (group.total === 1 ? '' : 's') + '</span></p>';
+                Object.keys(group.items).sort().forEach(product => {
+                    const count = group.items[product];
+                    html += '<div class="flex justify-between bg-zinc-800 px-5 py-3.5 rounded-2xl mb-2">';
+                    html += '<span>' + product + '</span>';
+                    html += '<span class="font-semibold text-emerald-400">' + count + ' Label' + (count === 1 ? '' : 's') + '</span>';
+                    html += '</div>';
+                });
+                html += '</div>';
+            });
+
+            document.getElementById("summaryContent").innerHTML = html;
+            document.getElementById("handWriteSummary").classList.remove("hidden");
+            document.getElementById("summaryPDFButton").classList.remove("hidden");
+        }
+
+        function downloadSummaryPDF() {
+            if (Object.keys(currentSummaryGroups).length === 0) return alert("Generate the summary first");
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+            let y = 20;
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(16);
+            doc.text("Delivery Summary", 105, y, { align: "center" });
+            y += 12;
+
+            Object.keys(currentSummaryGroups).sort().forEach(key => {
+                const group = currentSummaryGroups[key];
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(15);
+                doc.setTextColor(16, 185, 129);
+                doc.text(key, 20, y);
+                y += 8;
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(14);
+                doc.setTextColor(0);
+                doc.text(
