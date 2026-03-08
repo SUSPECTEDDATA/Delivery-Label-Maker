@@ -149,6 +149,7 @@
             else if (code === "NC01" || product.toUpperCase().includes("NDUJA")) days = 12;
             else if (code === "CHI23" || product.toUpperCase().includes("BONELESS BITES")) days = 9;
             else if (code === "CD09" || product.toUpperCase().includes("COOKIE DOUGH")) days = 17;
+            else if (code === "CHI08" || product.toUpperCase().includes("TANDOORI")) days = 10;   // ← Tandoori 10 days
 
             if (days === 0) return null;
             return { days, name };
