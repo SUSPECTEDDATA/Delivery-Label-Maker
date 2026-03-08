@@ -13,16 +13,22 @@
 </head>
 <body class="bg-zinc-950 text-zinc-100">
     <div class="max-w-3xl mx-auto p-8">
-        <div class="mb-10">
-            <h1 class="text-4xl font-bold tracking-tight">Delivery Label Maker</h1>
-            <p class="text-emerald-400 font-medium text-lg">Campaign 2 • 50×50mm Labels</p>
+        <div class="mb-10 flex items-center justify-between">
+            <div>
+                <h1 class="text-4xl font-bold tracking-tight">Delivery Label Maker</h1>
+                <p class="text-emerald-400 font-medium text-lg">Campaign 2 • 50×50mm Labels</p>
+            </div>
+            <button onclick="toggleSettings()" 
+                    class="bg-zinc-800 hover:bg-zinc-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2 text-lg">
+                ⚙️ Settings
+            </button>
         </div>
 
         <div class="bg-zinc-900 border border-zinc-800 rounded-3xl shadow-xl p-8">
-            <h2 class="text-xl font-semibold mb-6 text-white">1. Delivery Date</h2>
+            <h2 class="text-xl font-semibold mb-6 text-white">Delivery Date</h2>
             <input type="date" id="deliveryDate" class="w-full px-6 py-5 bg-zinc-800 border border-zinc-700 rounded-2xl text-lg focus:outline-none focus:border-emerald-500 text-white">
 
-            <h2 class="text-xl font-semibold mt-10 mb-6 text-white">2. Paste Order</h2>
+            <h2 class="text-xl font-semibold mt-10 mb-6 text-white">Paste Order</h2>
             <textarea id="orderInput" rows="12" class="w-full px-6 py-5 bg-zinc-800 border border-zinc-700 rounded-3xl font-mono text-sm resize-y focus:outline-none focus:border-emerald-500 text-white" placeholder="Paste your order here..."></textarea>
 
             <div class="grid grid-cols-2 gap-4 mt-10">
@@ -43,9 +49,45 @@
             <div id="summaryContent" class="space-y-8"></div>
             
             <div id="summaryPDFButton" class="hidden mt-8 pt-6 border-t border-zinc-700">
-                <button onclick="downloadSummaryPDF()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-5 rounded-2xl text-lg transition">
-                    ⬇️ Export PDF
-                </button>
+                <button onclick="downloadSummaryPDF()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-5 rounded-2xl text-lg transition">⬇️ Export PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+        <div class="bg-zinc-900 w-full max-w-2xl rounded-3xl overflow-hidden">
+            <div class="p-6 border-b border-zinc-700 flex items-center justify-between">
+                <h2 class="text-2xl font-bold">Item Settings</h2>
+                <button onclick="closeSettings()" class="text-3xl text-zinc-400 hover:text-white">×</button>
+            </div>
+            
+            <div class="p-6 max-h-[60vh] overflow-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-zinc-700 text-zinc-400">
+                            <th class="text-left py-3">Code</th>
+                            <th class="text-left py-3">Product Name</th>
+                            <th class="text-left py-3">Shelf Life (days)</th>
+                            <th class="w-24"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="modalItemsList"></tbody>
+                </table>
+            </div>
+
+            <div class="p-6 border-t border-zinc-700 bg-zinc-950">
+                <h3 class="font-semibold mb-4" id="modalFormTitle">Add New Item</h3>
+                <div class="grid grid-cols-3 gap-4">
+                    <input id="modalNewCode" placeholder="Code" class="bg-zinc-800 border border-zinc-700 rounded-2xl px-4 py-3">
+                    <input id="modalNewName" placeholder="Name" class="bg-zinc-800 border border-zinc-700 rounded-2xl px-4 py-3">
+                    <input id="modalNewDays" type="number" placeholder="Days" class="bg-zinc-800 border border-zinc-700 rounded-2xl px-4 py-3">
+                </div>
+                <div class="flex gap-4 mt-6">
+                    <button onclick="modalAddOrUpdateItem()" id="modalAddUpdateBtn"
+                            class="flex-1 bg-emerald-600 hover:bg-emerald-500 py-4 rounded-2xl font-semibold">Add Item</button>
+                    <button onclick="closeSettings()" class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-4 rounded-2xl">Close</button>
+                </div>
             </div>
         </div>
     </div>
@@ -54,6 +96,116 @@
         const excludedCodes = new Set(["SCE01","SCE21","CHE08","PPP03","BAC04"]);
         let currentResults = [];
         let currentSummaryGroups = {};
+
+        let shelfLifeItems = [
+            {code:"STR07", name:"STRIPPERS", days:10},
+            {code:"WIN06", name:"WINGS", days:9},
+            {code:"CHI24", name:"TENDERS", days:9},
+            {code:"BEE01", name:"BEEF", days:9},
+            {code:"CHI06", name:"CHICKEN STRIPS", days:9},
+            {code:"SAU16", name:"SAUSAGE", days:6},
+            {code:"MB05", name:"MEATBALLS", days:9},
+            {code:"PAS06", name:"MAC N CHEESE", days:6},
+            {code:"CHE24", name:"STRING CHEESE", days:7},
+            {code:"KK04", name:"KICKERS", days:10},
+            {code:"PW10", name:"WEDGES", days:7},
+            {code:"FT02", name:"WRAPZ", days:22},
+            {code:"NC01", name:"NDUJA", days:12},
+            {code:"CHI23", name:"BONLESS BITES", days:9},
+            {code:"CD09", name:"COOKIES", days:17},
+            {code:"CD23", name:"CREME EGG COOKIES", days:14},
+            {code:"PFR02", name:"FRIES", days:7},
+            {code:"CHI08", name:"TANDOORI", days:10}
+        ];
+
+        let editingIndex = -1;
+
+        if (localStorage.getItem("shelfLifeItems")) {
+            shelfLifeItems = JSON.parse(localStorage.getItem("shelfLifeItems"));
+        }
+
+        function saveItems() {
+            localStorage.setItem("shelfLifeItems", JSON.stringify(shelfLifeItems));
+        }
+
+        function renderModalItemsList() {
+            let html = "";
+            for (let i = 0; i < shelfLifeItems.length; i++) {
+                let item = shelfLifeItems[i];
+                html += `<tr class="border-b border-zinc-700 hover:bg-zinc-800">
+                    <td class="py-4 px-4">${item.code}</td>
+                    <td class="py-4 px-4">${item.name}</td>
+                    <td class="py-4 px-4">${item.days}</td>
+                    <td class="py-4 px-4 text-right">
+                        <button onclick="editItem(${i})" class="text-emerald-400 hover:text-white mr-4">Edit</button>
+                        <button onclick="deleteItem(${i})" class="text-red-400 hover:text-white">Delete</button>
+                    </td>
+                </tr>`;
+            }
+            document.getElementById("modalItemsList").innerHTML = html;
+        }
+
+        function toggleSettings() {
+            const modal = document.getElementById("settingsModal");
+            modal.classList.toggle("hidden");
+            if (!modal.classList.contains("hidden")) {
+                resetModalForm();
+                renderModalItemsList();
+            }
+        }
+
+        function closeSettings() {
+            document.getElementById("settingsModal").classList.add("hidden");
+        }
+
+        function resetModalForm() {
+            editingIndex = -1;
+            document.getElementById("modalFormTitle").innerHTML = "Add New Item";
+            document.getElementById("modalAddUpdateBtn").innerHTML = "Add Item";
+            document.getElementById("modalNewCode").value = "";
+            document.getElementById("modalNewName").value = "";
+            document.getElementById("modalNewDays").value = "";
+        }
+
+        function editItem(index) {
+            editingIndex = index;
+            let item = shelfLifeItems[index];
+            document.getElementById("modalFormTitle").innerHTML = "Edit Item";
+            document.getElementById("modalAddUpdateBtn").innerHTML = "Update Item";
+            document.getElementById("modalNewCode").value = item.code;
+            document.getElementById("modalNewName").value = item.name;
+            document.getElementById("modalNewDays").value = item.days;
+        }
+
+        function deleteItem(index) {
+            if (confirm("Delete this item permanently?")) {
+                shelfLifeItems.splice(index, 1);
+                saveItems();
+                renderModalItemsList();
+            }
+        }
+
+        function modalAddOrUpdateItem() {
+            let code = document.getElementById("modalNewCode").value.trim().toUpperCase();
+            let name = document.getElementById("modalNewName").value.trim();
+            let days = parseInt(document.getElementById("modalNewDays").value);
+
+            if (!code || !name || isNaN(days)) {
+                alert("Please fill all fields");
+                return;
+            }
+
+            if (editingIndex >= 0) {
+                shelfLifeItems[editingIndex] = {code, name, days};
+            } else {
+                shelfLifeItems.push({code, name, days});
+            }
+
+            saveItems();
+            renderModalItemsList();
+            resetModalForm();
+            alert(editingIndex >= 0 ? "Item updated!" : "Item added!");
+        }
 
         function formatUKDate(dateStr) {
             const d = new Date(dateStr);
@@ -149,7 +301,9 @@
             else if (code === "NC01" || product.toUpperCase().includes("NDUJA")) days = 12;
             else if (code === "CHI23" || product.toUpperCase().includes("BONELESS BITES")) days = 9;
             else if (code === "CD09" || product.toUpperCase().includes("COOKIE DOUGH")) days = 17;
-            else if (code === "CHI08" || product.toUpperCase().includes("TANDOORI")) days = 10;   // ← Tandoori 10 days
+            else if (code === "CD23" || product.toUpperCase().includes("CREME EGG")) days = 14;
+            else if (code === "PFR02" || product.toUpperCase().includes("FRIES")) days = 7;
+            else if (code === "CHI08" || product.toUpperCase().includes("TANDOORI")) days = 10;
 
             if (days === 0) return null;
             return { days, name };
@@ -189,6 +343,29 @@
             document.getElementById("successMessage").classList.remove("hidden");
         }
 
+        function downloadPDF() {
+            if (!currentResults.length) return;
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: [50, 50] });
+
+            currentResults.forEach((label, i) => {
+                if (i > 0) doc.addPage([50, 50], "portrait");
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(13.5);
+                doc.text(label.product, 25, 16, { align: "center", maxWidth: 44 });
+
+                doc.setFontSize(16.5);
+                doc.setTextColor(230, 0, 18);
+                doc.text(label.weekday, 25, 28, { align: "center" });
+
+                doc.setFontSize(27);
+                doc.setTextColor(0);
+                doc.text(label.date, 25, 42, { align: "center" });
+            });
+
+            doc.save(`Domino's_Labels.pdf`);
+        }
+
         function showHandWriteSummary() {
             const dateInput = document.getElementById("deliveryDate").value;
             const text = document.getElementById("orderInput").value.trim();
@@ -222,112 +399,4 @@
 
             const groups = {};
             tempResults.forEach(item => {
-                const key = `${item.weekday} ${item.date}`;
-                if (!groups[key]) groups[key] = { items: {}, total: 0 };
-                groups[key].items[item.product] = (groups[key].items[item.product] || 0) + 1;
-                groups[key].total += 1;
-            });
-
-            currentSummaryGroups = groups;
-
-            let html = '';
-            Object.keys(groups).sort().forEach(key => {
-                const group = groups[key];
-                html += '<div class="mb-8">';
-                html += '<h3 class="text-emerald-400 text-xl font-bold mb-1">' + key + '</h3>';
-                html += '<p class="text-zinc-400 mb-4">Total: <span class="font-semibold text-emerald-400">' + group.total + ' Label' + (group.total === 1 ? '' : 's') + '</span></p>';
-
-                Object.keys(group.items).sort().forEach(product => {
-                    const count = group.items[product];
-                    html += '<div class="flex justify-between bg-zinc-800 px-5 py-3.5 rounded-2xl mb-2">';
-                    html += '<span>' + product + '</span>';
-                    html += '<span class="font-semibold text-emerald-400">' + count + ' Label' + (count === 1 ? '' : 's') + '</span>';
-                    html += '</div>';
-                });
-                html += '</div>';
-            });
-
-            document.getElementById("summaryContent").innerHTML = html;
-            document.getElementById("handWriteSummary").classList.remove("hidden");
-            document.getElementById("summaryPDFButton").classList.remove("hidden");
-        }
-
-        function downloadSummaryPDF() {
-            if (Object.keys(currentSummaryGroups).length === 0) return alert("Generate the summary first");
-
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-
-            let y = 20;
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(16);
-            doc.text("Delivery Summary", 105, y, { align: "center" });
-            y += 12;
-
-            Object.keys(currentSummaryGroups).sort().forEach(key => {
-                const group = currentSummaryGroups[key];
-
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(15);
-                doc.setTextColor(16, 185, 129);
-                doc.text(key, 20, y);
-                y += 8;
-
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(14);
-                doc.setTextColor(0);
-                doc.text("Total: " + group.total + " Labels", 20, y);
-                y += 8;
-
-                doc.setFont("helvetica", "normal");
-                doc.setFontSize(11);
-                Object.keys(group.items).sort().forEach(product => {
-                    const count = group.items[product];
-                    doc.text(product, 20, y);
-                    doc.text(count + " Labels", 140, y);
-                    y += 6;
-                });
-
-                y += 10;
-
-                if (y > 275) {
-                    doc.addPage();
-                    y = 20;
-                }
-            });
-
-            doc.save("Delivery_Summary.pdf");
-        }
-
-        function downloadPDF() {
-            if (!currentResults.length) return;
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: [50, 50] });
-
-            currentResults.forEach((label, i) => {
-                if (i > 0) doc.addPage([50, 50], "portrait");
-                
-                // BIGGER TEXT TO FILL THE 50×50mm SPACE
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(13.5);
-                doc.text(label.product, 25, 16, { align: "center", maxWidth: 44 });
-
-                doc.setFontSize(16.5);
-                doc.setTextColor(230, 0, 18);
-                doc.text(label.weekday, 25, 28, { align: "center" });
-
-                doc.setFontSize(27);
-                doc.setTextColor(0);
-                doc.text(label.date, 25, 42, { align: "center" });
-            });
-
-            doc.save(`Domino's_Labels.pdf`);
-        }
-
-        window.onload = () => {
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById("deliveryDate").value = today;
-        };
-    </script>
-</body>
-</html>
+                const key = `${item.weekday} ${item.da
