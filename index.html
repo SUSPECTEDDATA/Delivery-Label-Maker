@@ -4,92 +4,82 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Delivery Label Maker</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        body { font-family: 'Inter', system-ui, sans-serif; }
+        body { font-family: Arial, sans-serif; background: #f8f9fa; color: #212529; margin: 20px; line-height: 1.5; padding-bottom: 80px; }
+        .header { position: relative; margin-bottom: 30px; text-align: center; }
+        h1 { margin: 0; font-size: 28px; }
+        .cog-btn { background: none; border: none; font-size: 32px; cursor: pointer; padding: 8px; position: absolute; top: 0; right: 0; }
+        h3 { margin: 20px 0 8px 0; font-size: 18px; color: #555; }
+        button { padding: 15px; font-size: 18px; cursor: pointer; border: none; border-radius: 0; }
+        input, textarea { padding: 12px; margin-bottom: 10px; width: 100%; box-sizing: border-box; background: #fff; color: #212529; border: 1px solid #ccc; border-radius: 0; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; background: #fff; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        .hidden { display: none; }
+        #settingsPanel { background: #fff; padding: 20px; border: 2px solid #ddd; margin-top: 20px; border-radius: 8px; }
+        .summary-box { background: #fff; padding: 15px; margin: 15px 0; border: 1px solid #ddd; border-radius: 8px; }
+        .summary-item { display: flex; justify-content: space-between; background: #f0f0f0; padding: 12px; margin: 6px 0; border-radius: 6px; }
+        .total-line { font-weight: bold; background: #e0f0ff; padding: 8px 12px; border-radius: 6px; margin: 8px 0; }
+        .action-btn { font-size: 14px; padding: 4px 10px; margin: 0 3px; }
     </style>
 </head>
-<body class="bg-zinc-950 text-zinc-100">
-    <div class="max-w-3xl mx-auto p-8">
-        <div class="mb-10 flex items-center justify-between">
-            <div>
-                <h1 class="text-4xl font-bold tracking-tight">Delivery Label Maker</h1>
-            </div>
-            <button id="settingsBtn" class="bg-zinc-800 hover:bg-zinc-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2 text-lg">⚙️ Settings</button>
-        </div>
-
-        <div class="bg-zinc-900 border border-zinc-800 rounded-3xl shadow-xl p-8">
-            <h2 class="text-xl font-semibold mb-6 text-white">Delivery Date</h2>
-            <input type="date" id="deliveryDate" class="w-full px-6 py-5 bg-zinc-800 border border-zinc-700 rounded-2xl text-lg focus:outline-none focus:border-emerald-500 text-white">
-
-            <h2 class="text-xl font-semibold mt-10 mb-6 text-white">Paste Order</h2>
-            <textarea id="orderInput" rows="12" class="w-full px-6 py-5 bg-zinc-800 border border-zinc-700 rounded-3xl font-mono text-sm resize-y focus:outline-none focus:border-emerald-500 text-white" placeholder="Paste your order here..."></textarea>
-
-            <div class="grid grid-cols-2 gap-4 mt-10">
-                <button id="generateBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-5 rounded-2xl text-lg transition">Generate Labels (PDF)</button>
-                <button id="summaryBtn" class="bg-zinc-700 hover:bg-zinc-600 text-white font-semibold py-5 rounded-2xl text-lg transition">Delivery Summary</button>
-            </div>
-        </div>
-
-        <div id="successMessage" class="hidden mt-8 bg-emerald-950 border border-emerald-800 rounded-3xl p-8 text-center">
-            <div class="text-6xl mb-4">✅</div>
-            <h3 class="text-2xl font-semibold text-white mb-2">Labels Generated!</h3>
-            <p class="text-emerald-300 mb-6">Ready for your Niimbot B1.<br>Click below to download the PDF.</p>
-            <button id="downloadLabelsBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white px-12 py-4 rounded-2xl text-lg font-semibold transition">⬇️ Download Labels PDF</button>
-        </div>
-
-        <div id="handWriteSummary" class="hidden mt-8 bg-zinc-900 border border-zinc-800 rounded-3xl shadow-xl p-8">
-            <h2 class="text-2xl font-bold mb-6 text-white">Delivery Summary</h2>
-            <div id="summaryContent" class="space-y-8"></div>
-            <div id="summaryPDFButton" class="hidden mt-8 pt-6 border-t border-zinc-700">
-                <button id="downloadSummaryBtn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-5 rounded-2xl text-lg transition">⬇️ Export PDF</button>
-            </div>
-        </div>
+<body>
+    <div class="header">
+        <h1>Delivery Label Maker</h1>
+        <button onclick="toggleSettings()" class="cog-btn">⚙️</button>
     </div>
 
-    <!-- Settings Modal -->
-    <div id="settingsModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-        <div class="bg-zinc-900 w-full max-w-2xl rounded-3xl overflow-hidden">
-            <div class="p-6 border-b border-zinc-700 flex items-center justify-between">
-                <h2 class="text-2xl font-bold">Item Settings</h2>
-                <button onclick="closeSettings()" class="text-3xl text-zinc-400 hover:text-white">×</button>
-            </div>
-            <div class="p-6 max-h-[60vh] overflow-auto">
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr class="border-b border-zinc-700 text-zinc-400">
-                            <th class="text-left py-3">Code</th>
-                            <th class="text-left py-3">Product Name</th>
-                            <th class="text-left py-3">Shelf Life (days)</th>
-                            <th class="text-left py-3">Labels Per Item</th>
-                            <th class="w-24"></th>
-                        </tr>
-                    </thead>
-                    <tbody id="modalItemsList"></tbody>
-                </table>
-            </div>
-            <div class="p-6 border-t border-zinc-700 bg-zinc-950">
-                <h3 class="font-semibold mb-4" id="modalFormTitle">Add New Item</h3>
-                <div class="grid grid-cols-4 gap-4">
-                    <input id="modalNewCode" placeholder="Code" class="bg-zinc-800 border border-zinc-700 rounded-2xl px-4 py-3">
-                    <input id="modalNewName" placeholder="Name" class="bg-zinc-800 border border-zinc-700 rounded-2xl px-4 py-3">
-                    <input id="modalNewDays" type="number" placeholder="Days" class="bg-zinc-800 border border-zinc-700 rounded-2xl px-4 py-3">
-                    <input id="modalNewLabelsPerItem" type="number" value="1" placeholder="Labels" class="bg-zinc-800 border border-zinc-700 rounded-2xl px-4 py-3">
-                </div>
-                <div class="flex gap-4 mt-6">
-                    <button onclick="modalAddOrUpdateItem()" id="modalAddUpdateBtn" class="flex-1 bg-emerald-600 hover:bg-emerald-500 py-4 rounded-2xl font-semibold">Add Item</button>
-                    <button onclick="closeSettings()" class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-4 rounded-2xl">Close</button>
-                </div>
-            </div>
-        </div>
+    <h3>Delivery Date</h3>
+    <input type="date" id="deliveryDate">
+
+    <h3>Paste Order</h3>
+    <textarea id="orderInput" rows="12" placeholder="Paste your order here..."></textarea>
+
+    <button onclick="showHandWriteSummary()" style="width:100%; background:#228B22; color:white; margin:20px 0 30px 0; padding:16px; font-size:18px;">
+        Delivery Summary
+    </button>
+
+    <div id="handWriteSummary" class="hidden">
+        <h2>Delivery Summary</h2>
+        <div id="summaryContent"></div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div id="settingsPanel" class="hidden">
+        <h2>Item Settings</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Product Name</th>
+                    <th>Shelf Life (days)</th>
+                    <th>Labels Per Item</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="itemsList"></tbody>
+        </table>
+
+        <h3 id="formTitle">Add New Item</h3>
+        Code: <input id="newCode" placeholder="e.g. CHI08"><br>
+        Name: <input id="newName" placeholder="e.g. TANDOORI"><br>
+        Days: <input id="newDays" type="number" placeholder="10"><br>
+        Labels Per Item: <input id="newLabelsPerItem" type="number" value="1"><br><br>
+        
+        <button onclick="addOrUpdateItem()" id="addUpdateBtn" style="width:100%; background:#0a0;color:white;">Add Item</button>
+
+        <h3 style="margin-top:40px;">Label Settings</h3>
+        <p><strong>Current size:</strong> <span id="currentSizeDisplay">40 × 30 mm</span></p>
+        
+        <button onclick="setPresetSize(50,25)" style="width:100%; margin:8px 0; background:#0a0;color:white;">50 × 25 mm</button>
+        <button onclick="setPresetSize(40,30)" style="width:100%; margin:8px 0; background:#0a0;color:white;">40 × 30 mm</button>
     </div>
 
     <script>
         const excludedCodes = new Set(["SCE01","SCE21","CHE08","PPP03","BAC04"]);
         let currentResults = [];
-        let currentSummaryGroups = {};
+        let labelWidth = 40;
+        let labelHeight = 30;
 
         let shelfLifeItems = [
             {code:"STR07", name:"STRIPPERS", days:10, labelsPerItem:4},
@@ -116,301 +106,226 @@
         ];
 
         let editingIndex = -1;
-
-        if (localStorage.getItem("shelfLifeItems")) {
-            let saved = JSON.parse(localStorage.getItem("shelfLifeItems"));
-            const codes = ["TCF07","TCF16","TCF17"];
-            codes.forEach(c => {
-                if (!saved.some(i => i.code === c)) {
-                    saved.push({code:c, name:`THIN CRUST ${c==="TCF07"?"7\"":c==="TCF16"?"11.5\"":"13.5\""}`, days:21, labelsPerItem:1});
-                }
-            });
-            shelfLifeItems = saved;
+        if (localStorage.getItem("shelfLifeItems")) shelfLifeItems = JSON.parse(localStorage.getItem("shelfLifeItems"));
+        if (localStorage.getItem("labelSettings")) {
+            let ls = JSON.parse(localStorage.getItem("labelSettings"));
+            labelWidth = ls.width || 40;
+            labelHeight = ls.height || 30;
         }
 
         function saveItems() { localStorage.setItem("shelfLifeItems", JSON.stringify(shelfLifeItems)); }
+        function setPresetSize(w, h) {
+            labelWidth = w;
+            labelHeight = h;
+            localStorage.setItem("labelSettings", JSON.stringify({width: w, height: h}));
+            document.getElementById("currentSizeDisplay").innerHTML = w + " × " + h + " mm";
+            alert("Label size changed to " + w + " × " + h + " mm");
+        }
 
-        function renderModalItemsList() {
+        function renderItemsList() {
             let html = "";
             for (let i = 0; i < shelfLifeItems.length; i++) {
                 let item = shelfLifeItems[i];
-                html += `<tr class="border-b border-zinc-700 hover:bg-zinc-800">
-                    <td class="py-4 px-4">${item.code}</td>
-                    <td class="py-4 px-4">${item.name}</td>
-                    <td class="py-4 px-4">${item.days}</td>
-                    <td class="py-4 px-4">${item.labelsPerItem}</td>
-                    <td class="py-4 px-4 text-right">
-                        <button onclick="editItem(${i})" class="text-emerald-400 hover:text-white mr-4">Edit</button>
-                        <button onclick="deleteItem(${i})" class="text-red-400 hover:text-white">Delete</button>
-                    </td>
-                </tr>`;
+                html += "<tr><td>" + item.code + "</td><td>" + item.name + "</td><td>" + item.days + "</td><td>" + item.labelsPerItem + "</td>";
+                html += "<td><button class='action-btn' onclick='editItem(" + i + ")' style='background:#08f;color:white;'>Edit</button>";
+                html += "<button class='action-btn' onclick='deleteItem(" + i + ")' style='background:#c00;color:white;'>Delete</button></td></tr>";
             }
-            document.getElementById("modalItemsList").innerHTML = html;
+            document.getElementById("itemsList").innerHTML = html;
         }
 
         function toggleSettings() {
-            const modal = document.getElementById("settingsModal");
-            modal.classList.toggle("hidden");
-            if (!modal.classList.contains("hidden")) {
-                resetModalForm();
-                renderModalItemsList();
+            var panel = document.getElementById("settingsPanel");
+            panel.classList.toggle("hidden");
+            if (!panel.classList.contains("hidden")) {
+                resetForm();
+                renderItemsList();
+                document.getElementById("currentSizeDisplay").innerHTML = labelWidth + " × " + labelHeight + " mm";
             }
         }
 
-        function closeSettings() { document.getElementById("settingsModal").classList.add("hidden"); }
-
-        function resetModalForm() {
+        function resetForm() {
             editingIndex = -1;
-            document.getElementById("modalFormTitle").innerHTML = "Add New Item";
-            document.getElementById("modalAddUpdateBtn").innerHTML = "Add Item";
-            document.getElementById("modalNewCode").value = "";
-            document.getElementById("modalNewName").value = "";
-            document.getElementById("modalNewDays").value = "";
-            document.getElementById("modalNewLabelsPerItem").value = "1";
+            document.getElementById("formTitle").innerHTML = "Add New Item";
+            document.getElementById("addUpdateBtn").innerHTML = "Add Item";
+            document.getElementById("newCode").value = "";
+            document.getElementById("newName").value = "";
+            document.getElementById("newDays").value = "";
+            document.getElementById("newLabelsPerItem").value = "1";
         }
 
         function editItem(index) {
             editingIndex = index;
             let item = shelfLifeItems[index];
-            document.getElementById("modalFormTitle").innerHTML = "Edit Item";
-            document.getElementById("modalAddUpdateBtn").innerHTML = "Update Item";
-            document.getElementById("modalNewCode").value = item.code;
-            document.getElementById("modalNewName").value = item.name;
-            document.getElementById("modalNewDays").value = item.days;
-            document.getElementById("modalNewLabelsPerItem").value = item.labelsPerItem;
+            document.getElementById("formTitle").innerHTML = "Edit Item";
+            document.getElementById("addUpdateBtn").innerHTML = "Update Item";
+            document.getElementById("newCode").value = item.code;
+            document.getElementById("newName").value = item.name;
+            document.getElementById("newDays").value = item.days;
+            document.getElementById("newLabelsPerItem").value = item.labelsPerItem;
         }
 
         function deleteItem(index) {
             if (confirm("Delete this item permanently?")) {
                 shelfLifeItems.splice(index, 1);
                 saveItems();
-                renderModalItemsList();
+                renderItemsList();
             }
         }
 
-        function modalAddOrUpdateItem() {
-            let code = document.getElementById("modalNewCode").value.trim().toUpperCase();
-            let name = document.getElementById("modalNewName").value.trim();
-            let days = parseInt(document.getElementById("modalNewDays").value);
-            let labelsPerItem = parseInt(document.getElementById("modalNewLabelsPerItem").value) || 1;
+        function addOrUpdateItem() {
+            let code = document.getElementById("newCode").value.trim().toUpperCase();
+            let name = document.getElementById("newName").value.trim();
+            let days = parseInt(document.getElementById("newDays").value);
+            let labelsPerItem = parseInt(document.getElementById("newLabelsPerItem").value) || 1;
+            if (!code || !name || isNaN(days)) return alert("Please fill all fields");
 
-            if (!code || !name || isNaN(days)) {
-                alert("Please fill all fields");
-                return;
-            }
-
-            if (editingIndex >= 0) {
-                shelfLifeItems[editingIndex] = {code, name, days, labelsPerItem};
-            } else {
-                shelfLifeItems.push({code, name, days, labelsPerItem});
-            }
+            if (editingIndex >= 0) shelfLifeItems[editingIndex] = {code, name, days, labelsPerItem};
+            else shelfLifeItems.push({code, name, days, labelsPerItem});
 
             saveItems();
-            renderModalItemsList();
-            resetModalForm();
+            renderItemsList();
+            resetForm();
             alert(editingIndex >= 0 ? "Item updated!" : "Item added!");
         }
 
         function getDaysAndName(code, product) {
             code = code.toUpperCase().trim();
             if (excludedCodes.has(code)) return null;
-
             let item = shelfLifeItems.find(i => i.code === code);
             if (item) {
                 let name = item.name;
-                if ((code === "TCF16" || code === "TCF17" || code === "TCF07") || product.toUpperCase().includes("THIN CRUST")) {
-                    let size = "";
-                    if (product.includes("11.5")) size = "11.5\"";
-                    else if (product.includes("13.5")) size = "13.5\"";
-                    else if (product.includes("7\"") || product.includes("7 ")) size = "7\"";
+                if (code.startsWith("TCF") || product.toUpperCase().includes("THIN CRUST")) {
+                    let size = product.includes("11.5") ? "11.5\"" : product.includes("13.5") ? "13.5\"" : product.includes("7\"") ? "7\"" : "";
                     name = size ? `THIN CRUST ${size}` : name;
                 }
                 return { days: item.days, name: name, labelsPerItem: item.labelsPerItem || 1 };
             }
-
-            item = shelfLifeItems.find(i => product.toUpperCase().includes(i.name.toUpperCase()));
-            if (item) return { days: item.days, name: item.name, labelsPerItem: item.labelsPerItem || 1 };
-
             if (code === "CD23" || product.toUpperCase().includes("CREME EGG")) return { days: 14, name: "CREME EGG COOKIES", labelsPerItem: 1 };
             if (code === "PFR02" || product.toUpperCase().includes("FRIES")) return { days: 7, name: "FRIES", labelsPerItem: 6 };
-
             return null;
         }
 
-        function formatUKDate(dateStr) {
-            const d = new Date(dateStr);
-            return d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' });
-        }
-
-        function getWeekday(dateStr) {
-            const d = new Date(dateStr);
-            return d.toLocaleDateString('en-GB', { weekday: 'long' });
-        }
-
+        function formatUKDate(d) { return d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' }); }
+        function getWeekday(d) { return d.toLocaleDateString('en-GB', { weekday: 'long' }); }
         function calculateExpiry(deliveryStr, days) {
-            const [y, m, d] = deliveryStr.split('-').map(Number);
-            const date = new Date(y, m-1, d);
+            var date = new Date(deliveryStr);
             date.setDate(date.getDate() + days - 1);
             return { date: formatUKDate(date), weekday: getWeekday(date) };
         }
 
         function parseOrder(text) {
-            const lines = text.trim().split('\n').filter(l => l.trim().length > 5);
-            const items = [];
-            for (let line of lines) {
-                let parts = line.split('\t');
+            var lines = text.trim().split('\n').filter(l => l.trim().length > 5);
+            var items = [];
+            lines.forEach(line => {
+                var parts = line.split('\t');
                 if (parts.length < 4) parts = line.split(',');
                 if (parts.length < 4) parts = line.trim().split(/\s{2,}/);
-                if (parts.length < 4) continue;
-                const code = parts[1].trim().toUpperCase();
-                const qtyStr = parts[3].trim().replace(/[^0-9]/g, '') || "1";
-                const qty = parseInt(qtyStr) || 1;
-                let product = parts[2] ? parts[2].trim() : "";
+                if (parts.length < 4) return;
+                var code = parts[1].trim().toUpperCase();
+                var qty = parseInt(parts[3].trim().replace(/[^0-9]/g, '')) || 1;
+                var product = parts[2] ? parts[2].trim() : "";
                 items.push({ code, product, qty });
-            }
+            });
             return items;
         }
 
-        function processOrder() {
-            const dateInput = document.getElementById("deliveryDate").value;
-            const text = document.getElementById("orderInput").value.trim();
-            if (!dateInput) return alert("Select delivery date");
-            if (!text) return alert("Paste your order");
-
-            const parsed = parseOrder(text);
-            currentResults = [];
-
-            parsed.forEach(item => {
-                const info = getDaysAndName(item.code, item.product);
-                if (!info) return;
-                const expiry = calculateExpiry(dateInput, info.days);
-                let printQty = item.qty * (info.labelsPerItem || 1);
-                for (let i = 0; i < printQty; i++) {
-                    currentResults.push({ product: info.name, date: expiry.date, weekday: expiry.weekday });
-                }
-            });
-
-            if (currentResults.length === 0) return alert("No items with expiry dates found");
-            document.getElementById("successMessage").classList.remove("hidden");
-        }
-
-        function downloadPDF() {
-            if (!currentResults.length) return;
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: [50, 50] });
-            currentResults.forEach((label, i) => {
-                if (i > 0) doc.addPage([50, 50]);
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(13.5);
-                doc.text(label.product, 25, 16, { align: "center", maxWidth: 44 });
-                doc.setFontSize(16.5);
-                doc.setTextColor(230, 0, 18);
-                doc.text(label.weekday, 25, 28, { align: "center" });
-                doc.setFontSize(27);
-                doc.setTextColor(0);
-                doc.text(label.date, 25, 42, { align: "center" });
-            });
-            doc.save(`Domino's_Labels.pdf`);
-        }
-
         function showHandWriteSummary() {
-            const dateInput = document.getElementById("deliveryDate").value;
-            const text = document.getElementById("orderInput").value.trim();
-            if (!dateInput || !text) return alert("Please select date and paste order first");
+            var dateInput = document.getElementById("deliveryDate").value;
+            var text = document.getElementById("orderInput").value.trim();
+            if (!dateInput || !text) return alert("Please select date and paste order");
 
-            const parsed = parseOrder(text);
-            let tempResults = [];
-
+            var parsed = parseOrder(text);
+            var tempResults = [];
             parsed.forEach(item => {
-                const info = getDaysAndName(item.code, item.product);
+                var info = getDaysAndName(item.code, item.product);
                 if (!info) return;
-                const expiry = calculateExpiry(dateInput, info.days);
-                let printQty = item.qty * (info.labelsPerItem || 1);
-                for (let i = 0; i < printQty; i++) {
+                var expiry = calculateExpiry(dateInput, info.days);
+                var printQty = item.qty * (info.labelsPerItem || 1);
+                for (var i = 0; i < printQty; i++) {
                     tempResults.push({ product: info.name, date: expiry.date, weekday: expiry.weekday });
                 }
             });
-
             if (tempResults.length === 0) return alert("No items with expiry dates found");
 
-            const groups = {};
-            tempResults.forEach(item => {
-                const key = `${item.weekday} ${item.date}`;
+            currentResults = tempResults;
+
+            var groups = {};
+            tempResults.forEach(r => {
+                var key = r.weekday + " " + r.date;
                 if (!groups[key]) groups[key] = { items: {}, total: 0 };
-                groups[key].items[item.product] = (groups[key].items[item.product] || 0) + 1;
-                groups[key].total += 1;
+                groups[key].items[r.product] = (groups[key].items[r.product] || 0) + 1;
+                groups[key].total++;
             });
 
-            currentSummaryGroups = groups;
-
-            let html = '';
+            var html = "";
             Object.keys(groups).sort().forEach(key => {
-                const group = groups[key];
-                html += '<div class="mb-8">';
-                html += '<h3 class="text-emerald-400 text-xl font-bold mb-1">' + key + '</h3>';
-                html += '<p class="text-zinc-400 mb-4">Total: <span class="font-semibold text-emerald-400">' + group.total + ' Label' + (group.total === 1 ? '' : 's') + '</span></p>';
+                var group = groups[key];
+                html += '<div class="summary-box"><h3 style="color:#0a0;">' + key + '</h3>';
+                html += '<p class="total-line">Total: ' + group.total + ' Label' + (group.total === 1 ? '' : 's') + '</p>';
                 Object.keys(group.items).sort().forEach(product => {
-                    const count = group.items[product];
-                    html += '<div class="flex justify-between bg-zinc-800 px-5 py-3.5 rounded-2xl mb-2">';
-                    html += '<span>' + product + '</span>';
-                    html += '<span class="font-semibold text-emerald-400">' + count + ' Label' + (count === 1 ? '' : 's') + '</span>';
-                    html += '</div>';
+                    var count = group.items[product];
+                    html += '<div class="summary-item"><span>' + product + '</span><span>' + count + ' Label' + (count === 1 ? '' : 's') + '</span></div>';
                 });
                 html += '</div>';
             });
 
+            html += '<button onclick="downloadPDF()" style="background:#0a0;color:white;width:100%;padding:15px;margin-top:20px;font-size:18px;border-radius:0;">Generate Labels (PDF)</button>';
+
             document.getElementById("summaryContent").innerHTML = html;
             document.getElementById("handWriteSummary").classList.remove("hidden");
-            document.getElementById("summaryPDFButton").classList.remove("hidden");
         }
 
-        function downloadSummaryPDF() {
-            if (Object.keys(currentSummaryGroups).length === 0) return alert("Generate the summary first");
+        function downloadPDF() {
+            if (!currentResults.length) return alert("No labels to generate");
+
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-            let y = 20;
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(16);
-            doc.text("Delivery Summary", 105, y, { align: "center" });
-            y += 12;
+            const doc = new jsPDF({ orientation: labelWidth > labelHeight ? "landscape" : "portrait", unit: "mm", format: [labelWidth, labelHeight] });
 
-            Object.keys(currentSummaryGroups).sort().forEach(key => {
-                const group = currentSummaryGroups[key];
+            currentResults.forEach((label, i) => {
+                if (i > 0) doc.addPage([labelWidth, labelHeight]);
+
                 doc.setFont("helvetica", "bold");
-                doc.setFontSize(15);
-                doc.setTextColor(16, 185, 129);
-                doc.text(key, 20, y);
-                y += 8;
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(14);
-                doc.setTextColor(0);
-                doc.text("Total: " + group.total + " Labels", 20, y);
-                y += 8;
-                doc.setFont("helvetica", "normal");
-                doc.setFontSize(11);
-                Object.keys(group.items).sort().forEach(product => {
-                    const count = group.items[product];
-                    doc.text(product, 20, y);
-                    doc.text(count + " Labels", 140, y);
-                    y += 6;
-                });
-                y += 10;
-                if (y > 275) { doc.addPage(); y = 20; }
+
+                if (labelWidth === 50 && labelHeight === 25) {
+                    // === 50×25 mm - WEEKDAY NOW HORIZONTAL IN BLACK BAR ===
+                    const abbr = label.weekday.substring(0,3).toUpperCase();
+
+                    // Straight black bar
+                    doc.setFillColor(0);
+                    doc.rect(2.5, 2, 13.8, 21, 'F');
+
+                    // White weekday - horizontal, centered in the bar
+                    doc.setTextColor(255);
+                    doc.setFontSize(13.8);
+                    doc.text(abbr, 9.4, 12.9, { align: "center" });
+
+                    // Black product name + date moved right by 1 (item name moved up by 0.5)
+                    doc.setTextColor(0);
+                    doc.setFontSize(11.1);
+                    doc.text(label.product, 19.2, 6.3, { align: "left", maxWidth: 29 });
+
+                    // Bigger date (font size increased by 3)
+                    doc.setFontSize(19.5);
+                    doc.text(label.date, 19.2, 19.6, { align: "left" });
+
+                } else if (labelWidth === 40 && labelHeight === 30) {
+                    // 40x30 - scaled up even bigger to better use space (fonts bigger only)
+                    doc.setFontSize(10.5);
+                    doc.text(label.product, 20, 7.8, { align: "center", maxWidth: 36 });
+                    doc.setFontSize(16.5);
+                    doc.setTextColor(230, 0, 18);
+                    doc.text(label.weekday, 20, 16.2, { align: "center" });
+                    doc.setFontSize(23.5);
+                    doc.setTextColor(0);
+                    doc.text(label.date, 20, 24.5, { align: "center" });
+                }
             });
-            doc.save("Delivery_Summary.pdf");
+            doc.save(`Domino's_Labels.pdf`);
         }
 
-        // Reliable button attachments for Netlify
-        document.addEventListener("DOMContentLoaded", () => {
-            document.getElementById("settingsBtn").addEventListener("click", toggleSettings);
-            document.getElementById("generateBtn").addEventListener("click", processOrder);
-            document.getElementById("summaryBtn").addEventListener("click", showHandWriteSummary);
-            document.getElementById("downloadLabelsBtn").addEventListener("click", downloadPDF);
-            document.getElementById("downloadSummaryBtn").addEventListener("click", downloadSummaryPDF);
-
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById("deliveryDate").value = today;
-        });
+        window.onload = function() {
+            document.getElementById("deliveryDate").value = new Date().toISOString().split('T')[0];
+        };
     </script>
 </body>
 </html>
