@@ -279,52 +279,67 @@
             if (!currentResults.length) return alert("No labels to generate");
 
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({ orientation: labelWidth > labelHeight ? "landscape" : "portrait", unit: "mm", format: [labelWidth, labelHeight] });
+            const doc = new jsPDF({
+                orientation: labelWidth > labelHeight ? "landscape" : "portrait",
+                unit: "mm",
+                format: [labelWidth, labelHeight]
+            });
 
             currentResults.forEach((label, i) => {
                 if (i > 0) doc.addPage([labelWidth, labelHeight]);
 
-                doc.setFont("helvetica", "bold");
-
                 if (labelWidth === 50 && labelHeight === 25) {
-                    // === 50×25 mm - WEEKDAY NOW HORIZONTAL IN BLACK BAR ===
+                    // =============================================
+                    // 50×25 mm – PERFECT as you confirmed
+                    // =============================================
                     const abbr = label.weekday.substring(0,3).toUpperCase();
 
-                    // Straight black bar
-                    doc.setFillColor(0);
-                    doc.rect(2.5, 2, 13.8, 21, 'F');
+                    doc.setFillColor(0, 0, 0);
+                    doc.rect(0, 0, 17.5, 25, "F");
 
-                    // White weekday - horizontal, centered in the bar
-                    doc.setTextColor(255);
-                    doc.setFontSize(13.8);
-                    doc.text(abbr, 9.4, 12.9, { align: "center" });
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFont("helvetica", "bold");
+                    doc.setFontSize(17.5);
+                    doc.text(abbr, 8.75, 13.5, { align: "center", baseline: "middle" });
 
-                    // Black product name + date moved right by 1 (item name moved up by 0.5)
-                    doc.setTextColor(0);
-                    doc.setFontSize(11.1);
-                    doc.text(label.product, 19.2, 6.3, { align: "left", maxWidth: 29 });
+                    doc.setTextColor(0, 0, 0);
+                    doc.setFontSize(11.2);
+                    doc.text(label.product, 20, 7.5, { align: "left", maxWidth: 28 });
 
-                    // Bigger date (font size increased by 3)
-                    doc.setFontSize(19.5);
-                    doc.text(label.date, 19.2, 19.6, { align: "left" });
+                    doc.setTextColor(0, 0, 0);
+                    doc.setFontSize(19.8);
+                    doc.text(label.date, 20, 19.2, { align: "left" });
 
                 } else if (labelWidth === 40 && labelHeight === 30) {
-                    // 40x30 - scaled up even bigger to better use space (fonts bigger only)
+                    // =============================================
+                    // 40×30 mm – EXACTLY the code from the version you pasted
+                    // (this produces the layout in your latest screenshot)
+                    // =============================================
+                    doc.setFont("helvetica", "bold");
+
+                    // Product name (auto-wraps for long names like "CHICKEN STRIPS")
+                    doc.setTextColor(0, 0, 0);
                     doc.setFontSize(10.5);
                     doc.text(label.product, 20, 7.8, { align: "center", maxWidth: 36 });
+
+                    // Weekday in red
                     doc.setFontSize(16.5);
                     doc.setTextColor(230, 0, 18);
                     doc.text(label.weekday, 20, 16.2, { align: "center" });
+
+                    // Big black date
                     doc.setFontSize(23.5);
                     doc.setTextColor(0);
                     doc.text(label.date, 20, 24.5, { align: "center" });
                 }
             });
-            doc.save(`Domino's_Labels.pdf`);
+
+            doc.save(`Domino's_Labels_\( {labelWidth}x \){labelHeight}mm.pdf`);
         }
 
         window.onload = function() {
             document.getElementById("deliveryDate").value = new Date().toISOString().split('T')[0];
+            renderItemsList();
         };
     </script>
 </body>
